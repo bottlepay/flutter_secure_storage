@@ -18,11 +18,12 @@ class FlutterSecureStorage {
   /// [iOptions] optional iOS options
   /// [aOptions] optional Android options
   /// Can throw a [PlatformException].
-  Future<void> write(
-          {required String key,
-          required String? value,
-          IOSOptions? iOptions,
-          AndroidOptions? aOptions}) =>
+  Future<void> write({
+    required String key,
+    required String? value,
+    IOSOptions? iOptions,
+    AndroidOptions? aOptions,
+  }) =>
       value != null
           ? _channel.invokeMethod('write', <String, dynamic>{
               'key': key,
@@ -101,7 +102,9 @@ class FlutterSecureStorage {
 
   /// Select correct options based on current platform
   Map<String, String>? _selectOptions(
-      IOSOptions? iOptions, AndroidOptions? aOptions) {
+    IOSOptions? iOptions,
+    AndroidOptions? aOptions,
+  ) {
     return Platform.isIOS ? iOptions?.params : aOptions?.params;
   }
 }
@@ -138,10 +141,10 @@ enum IOSAccessibility {
 }
 
 class IOSOptions extends Options {
-  IOSOptions(
-      {String? groupId,
-      IOSAccessibility accessibility = IOSAccessibility.unlocked})
-      : _groupId = groupId,
+  IOSOptions({
+    String? groupId,
+    IOSAccessibility accessibility = IOSAccessibility.unlocked,
+  })  : _groupId = groupId,
         _accessibility = accessibility;
 
   final String? _groupId;

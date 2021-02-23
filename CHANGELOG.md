@@ -1,3 +1,6 @@
+## [4.1.0]
+* Implemented Valet for underlying ios/macos implementation to improve flakiness when reading and storing data.
+
 ## [4.0.0]
 * Introduce null-safety. Thanks [Steve Alexander](https://github.com/SteveAlexander)
 
