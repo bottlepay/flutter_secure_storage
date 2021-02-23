@@ -20,6 +20,7 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
         case "readAll": readAll(call, result)
         case "deleteAll": deleteAll(call, result)
         case "delete": delete(call, result)
+        case "migrate": migrate(call, result)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -27,10 +28,9 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
     
     private func write(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         guard
-            let arguments = call.arguments as? [String : String?],
+            let arguments = call.arguments as? [String:Any?],
             let key = arguments["key"] as? String,
-            let value = arguments["value"] as? String,
-            let options = arguments["options"] as? [String: String?]?
+            let value = arguments["value"] as? String
         else {
             result(FlutterError(code: "InvalidArgument",
                                 message: "Must provide arguments",
@@ -38,7 +38,7 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
             return
         }
         
-        let valet = getValetInstance(options)
+        let valet = getValetInstance(arguments["options"] as? [String:String])
         try? valet.setString(value, forKey: key)
         result(nil)
     }
@@ -46,16 +46,16 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
     // Delete a key from the valet
     private func delete(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         guard
-            let arguments = call.arguments as? [String : String?],
-            let key = arguments["key"] as? String,
-            let options = arguments["options"] as? [String: String?]?
+            let arguments = call.arguments as? [String:Any?],
+            let key = arguments["key"] as? String
         else {
             result(FlutterError(code: "InvalidArgument",
                                 message: "Must provide arguments",
                                 details: nil))
             return
         }
-        let valet = getValetInstance(options)
+        
+        let valet = getValetInstance(arguments["options"] as? [String:String])
         try? valet.removeObject(forKey: key)
         result(nil)
     }
@@ -63,9 +63,8 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
     // Read a value from the valet
     private func read(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         guard
-            let arguments = call.arguments as? [String : String?],
-            let key = arguments["key"] as? String,
-            let options = arguments["options"] as? [String: String?]?
+            let arguments = call.arguments as? [String:Any?],
+            let key = arguments["key"] as? String
         else {
             result(FlutterError(code: "InvalidArgument",
                                 message: "Must provide arguments",
@@ -73,15 +72,14 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
             return
         }
         
-        let valet = getValetInstance(options)
+        let valet = getValetInstance(arguments["options"] as? [String:String])
         let value = try? valet.string(forKey: key)
         result(value)
     }
     
     private func readAll(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         guard
-            let arguments = call.arguments as? [String : String?],
-            let options = arguments["options"] as? [String: String?]?
+            let arguments = call.arguments as? [String:Any?]
         else {
             result(FlutterError(code: "InvalidArgument",
                                 message: "Must provide arguments",
@@ -89,7 +87,7 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
             return
         }
         
-        let valet = getValetInstance(options)
+        let valet = getValetInstance(arguments["options"] as? [String:String])
         let keys = try? valet.allKeys()
         var returnDict = [String:String]()
         
@@ -105,8 +103,7 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
     
     private func deleteAll(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         guard
-            let arguments = call.arguments as? [String : String?],
-            let options = arguments["options"] as? [String: String?]?
+            let arguments = call.arguments as? [String:Any?]
         else {
             result(FlutterError(code: "InvalidArgument",
                                 message: "Must provide arguments",
@@ -114,28 +111,56 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
             return
         }
         
-        let valet = getValetInstance(options)
+        let valet = getValetInstance(arguments["options"] as? [String:String])
         try? valet.removeAllObjects()
+        result(nil)
+    }
+    
+    // This will migrate data from keychain to valet. You should call this for each of your
+    // groupIds and accessibility options used to make sure you migrate everything.
+    private func migrate(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        let arguments = call.arguments as? [String:Any?]
+        let options = arguments?["options"] as? [String:String]
+        
+        // kSecAttr* options we will migrate using
+        var optionsDict = [String:AnyHashable]()
+        
+        // Base options from flutter_secure_storage
+        optionsDict[kSecClass as String] = kSecClassGenericPassword
+        optionsDict[kSecAttrService as String] = "flutter_secure_storage_service"
+        optionsDict[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlocked
+        
+        // Add options if specified
+        if (options != nil) {
+            if (options?["groupId"] != nil) {
+                optionsDict[kSecAttrAccessGroup as String] = options?["groupId"]!
+            }
+            
+            if (options?["accessibility"] != nil) {
+                optionsDict[kSecAttrAccessible as String] = accessibilityStringToIosEnum(val: options?["accessibility"])
+                
+            }
+        }
+        
+        let valet = getValetInstance(options)
+        try? valet.migrateObjects(matching: optionsDict, removeOnCompletion: true)
         result(nil)
     }
     
     private func getValetInstance(_ options: [String:String?]?) -> Valet {
         // Accessibility setting
-        let accessibility = getAccessibilityEnumFromString(val: options?["accessibility"] ?? nil)
+        let accessibility = accessibilityStringToValetEnum(val: options?["accessibility"] ?? nil)
         
         // Valet instance
         return Valet.valet(with: Identifier(nonEmpty: options?["groupId"] ?? defaultIdentifier)!, accessibility: accessibility)
     }
     
     
-    // Convert accessibility setting to enum
-    private func getAccessibilityEnumFromString(val: String?) -> Accessibility {
+    // Convert accessibility setting string to vault enum
+    private func accessibilityStringToValetEnum(val: String?) -> Accessibility {
         switch val {
         case "passcode":
             return .whenPasscodeSetThisDeviceOnly
-            
-        case "unlocked":
-            return .whenUnlocked
             
         case "unlocked_this_device":
             return .whenUnlockedThisDeviceOnly
@@ -146,8 +171,32 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
         case "first_unlock_this_device":
             return .afterFirstUnlockThisDeviceOnly
             
+        case "unlocked":
+            fallthrough
         default:
             return .whenUnlocked
+        }
+    }
+    
+    // Convert accessibility setting string to iOS enum
+    private func accessibilityStringToIosEnum(val: String?) -> CFString {
+        switch val {
+        case "passcode":
+            return kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly
+            
+        case "unlocked_this_device":
+            return kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            
+        case "first_unlock":
+            return kSecAttrAccessibleAfterFirstUnlock
+            
+        case "first_unlock_this_device":
+            return kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            
+        case "unlocked":
+            fallthrough
+        default:
+            return kSecAttrAccessibleWhenUnlocked
         }
     }
 }

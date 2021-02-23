@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/src/options/android_options.dart';
 import 'package:flutter_secure_storage/src/options/ios_options.dart';
@@ -12,6 +13,20 @@ class FlutterSecureStorage {
 
   static const MethodChannel _channel =
       const MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+
+  /// Migrate iOS keychain entries into Valet. You only need to do this once
+  /// and only on iOS. On Android, calling this will have no effect.
+  ///
+  /// Can throw a [PlatformException].
+  Future<void> migrate({
+    IOSOptions? iOptions,
+  }) async {
+    if (defaultTargetPlatform != TargetPlatform.iOS) {
+      return;
+    }
+
+    return _channel.invokeMethod('migrate', iOptions?.toMap());
+  }
 
   /// Encrypts and saves the [key] with the given [value].
   ///

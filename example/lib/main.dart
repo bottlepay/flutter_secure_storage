@@ -4,7 +4,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-void main() {
+final _storage = FlutterSecureStorage();
+
+Future<void> main() async {
+  /// Migrate if necessary
+  await _storage.migrate();
+
   runApp(MaterialApp(home: ItemsWidget()));
 }
 
@@ -17,8 +22,6 @@ enum _Actions { deleteAll }
 enum _ItemActions { delete, edit }
 
 class _ItemsWidgetState extends State<ItemsWidget> {
-  final _storage = FlutterSecureStorage();
-
   List<_SecItem> _items = [];
 
   @override
