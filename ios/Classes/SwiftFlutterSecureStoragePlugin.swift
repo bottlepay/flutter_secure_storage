@@ -39,7 +39,7 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
         }
         
         let valet = getValetInstance(options)
-        try? valet.setString(value!, forKey: key)
+        try? valet.setString(value, forKey: key)
         result(nil)
     }
     
