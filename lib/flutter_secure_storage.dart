@@ -10,7 +10,8 @@ export './src/options/ios_options.dart';
 class FlutterSecureStorage {
   const FlutterSecureStorage();
 
-  static const _channel = const MethodChannel('flutter_secure_storage');
+  static const MethodChannel _channel =
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
 
   /// Encrypts and saves the [key] with the given [value].
   ///
