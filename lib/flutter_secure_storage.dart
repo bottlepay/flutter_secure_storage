@@ -20,12 +20,18 @@ class FlutterSecureStorage {
   /// Can throw a [PlatformException].
   Future<void> migrate({
     IOSOptions? iOptions,
+
+    /// When true, delete the old keys from the old keychain once migration is finished.
+    bool removeOldKeys = false,
   }) async {
     if (defaultTargetPlatform != TargetPlatform.iOS) {
       return;
     }
 
-    return _channel.invokeMethod('migrate', iOptions?.toMap());
+    return _channel.invokeMethod('migrate', {
+      'options': iOptions?.toMap(),
+      'removeOldKeys': removeOldKeys,
+    });
   }
 
   /// Encrypts and saves the [key] with the given [value].

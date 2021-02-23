@@ -119,8 +119,17 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
     // This will migrate data from keychain to valet. You should call this for each of your
     // groupIds and accessibility options used to make sure you migrate everything.
     private func migrate(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
-        let arguments = call.arguments as? [String:Any?]
-        let options = arguments?["options"] as? [String:String]
+        guard
+            let arguments = call.arguments as? [String:Any?]
+        else {
+            result(FlutterError(code: "InvalidArgument",
+                                message: "Must provide arguments",
+                                details: nil))
+            return
+        }
+    
+        let options = arguments["options"] as? [String:String]
+        let removeOldKeys = arguments["removeOldKeys"] as? Bool
         
         // kSecAttr* options we will migrate using
         var optionsDict = [String:AnyHashable]()
@@ -143,7 +152,7 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
         }
         
         let valet = getValetInstance(options)
-        try? valet.migrateObjects(matching: optionsDict, removeOnCompletion: true)
+        try? valet.migrateObjects(matching: optionsDict, removeOnCompletion: removeOldKeys ?? false)
         result(nil)
     }
     
