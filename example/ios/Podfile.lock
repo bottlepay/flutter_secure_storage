@@ -1,28 +1,15 @@
 PODS:
   - Flutter (1.0.0)
-  - flutter_secure_storage (0.0.1):
-    - Flutter
-    - Valet
-  - Valet (4.1.1)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
-
-SPEC REPOS:
-  trunk:
-    - Valet
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  flutter_secure_storage:
-    :path: ".symlinks/plugins/flutter_secure_storage/ios"
 
 SPEC CHECKSUMS:
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
-  flutter_secure_storage: 3644f4ed5c9745cd66f777c48b3f9178499c1f74
-  Valet: 11ab0e318b7284888a81392e36136563b4af5deb
 
 PODFILE CHECKSUM: 324709033fdbc1fa744dac75dde748e9cf475d50
 

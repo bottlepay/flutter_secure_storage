@@ -8,7 +8,7 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
     let defaultIdentifier = "secure_storage"
     
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "plugins.it_nomads.com/flutter_secure_storage", binaryMessenger: registrar.messenger())
+        let channel = FlutterMethodChannel(name: "flutter_secure_storage", binaryMessenger: registrar.messenger())
         let instance = SwiftFlutterSecureStoragePlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
@@ -29,18 +29,13 @@ public class SwiftFlutterSecureStoragePlugin: NSObject, FlutterPlugin {
         guard
             let arguments = call.arguments as? [String : String?],
             let key = arguments["key"] as? String,
-            let value = arguments["value"],
+            let value = arguments["value"] as? String,
             let options = arguments["options"] as? [String: String?]?
         else {
             result(FlutterError(code: "InvalidArgument",
                                 message: "Must provide arguments",
                                 details: nil))
             return
-        }
-        
-        // If passing a null string, delete the value
-        if (value == nil) {
-            return delete(call, result)
         }
         
         let valet = getValetInstance(options)
